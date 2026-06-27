@@ -3,6 +3,10 @@ node_modules/
 android/
 www/vendor/
 
+# APK/artefatti scaricati (non vanno nel repo)
+*.apk
+*.zip
+
 # sistema
 .DS_Store
 Thumbs.db
