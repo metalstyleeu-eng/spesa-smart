@@ -53,14 +53,17 @@ function fileToBase64(file) {
 // Ridimensiona la foto e restituisce un data URL JPEG ("data:image/jpeg;base64,...").
 // Fondamentale: passare l'immagine a piena risoluzione al plugin nativo può
 // bloccare il bridge. Ridimensionando, la lettura è veloce e affidabile.
-async function imageToResizedDataURL(file, maxW = 1600, quality = 0.8) {
+async function imageToResizedDataURL(file, maxW = 2200, quality = 0.92) {
   const img = await fileToImage(file);
   const scale = Math.min(1, maxW / img.width);
   const w = Math.round(img.width * scale);
   const h = Math.round(img.height * scale);
   const cv = document.createElement("canvas");
   cv.width = w; cv.height = h;
-  cv.getContext("2d").drawImage(img, 0, 0, w, h);
+  const ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, w, h);
   return cv.toDataURL("image/jpeg", quality);
 }
 

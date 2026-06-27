@@ -362,6 +362,7 @@ function openReview(rec) {
   $("#rType").value = rec.type || "Altro";
   $("#rDate").value = rec.date || new Date().toISOString().slice(0, 10);
   $("#rTotal").value = fmtPrice(rec.total);
+  $("#rRaw").textContent = rec.raw || "(nessun testo letto)";
   renderItemsEditor(rec.items || []);
   updateSumHint();
   $("#reviewModal").classList.remove("hidden");

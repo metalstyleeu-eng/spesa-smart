@@ -168,6 +168,9 @@ input:focus, select:focus { outline: 2px solid var(--primary); border-color: tra
 .cat-add { display: grid; grid-template-columns: 56px 1fr 44px; gap: 8px; align-items: center; }
 .cat-add input { padding: 9px 10px; }
 .cat-add #newCatEmoji { text-align: center; }
+.raw-box { margin-top: 14px; }
+.raw-box summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.raw-box pre { white-space: pre-wrap; word-break: break-word; background: #0f172a; color: #d1fae5; font-size: 12px; padding: 10px; border-radius: 10px; max-height: 220px; overflow: auto; margin-top: 8px; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fef3c7; color: #92400e; padding: 10px 14px; font-size: 14px; border-bottom: 1px solid #fde68a; max-width: 720px; margin-inline: auto; }
 .banner__actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .banner .icon-btn { color: #92400e; }
