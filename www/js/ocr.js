@@ -101,7 +101,7 @@ function extractText(res) {
 // Restituisce il testo riconosciuto oppure null se nessun plugin è disponibile.
 // NB: il plugin va installato e sincronizzato in fase di build (vedi BUILD-APK.md).
 // Questo adapter è difensivo: se l'API differisse, basta aggiungere una voce qui.
-async function nativeRecognize(file, onProgress) {
+async function nativeRecognize(file, onProgress, diag) {
   const c = cap();
   if (!c) return null;
   // Ottiene il proxy del plugin per nome dal bridge Capacitor.
@@ -136,9 +136,12 @@ async function nativeRecognize(file, onProgress) {
       const text = extractText(res);
       if (text && text.trim().length > 2) {
         if (onProgress) onProgress(1);
+        if (diag) diag.steps.push(cand.name + ": OK");
         return text;
       }
+      if (diag) diag.steps.push(cand.name + ": risposta vuota");
     } catch (e) {
+      if (diag) diag.steps.push(cand.name + ": " + (e && e.message));
       console.warn("Plugin OCR", cand.name, "non utilizzabile:", e && e.message);
     }
   }
@@ -173,17 +176,33 @@ async function ocrTesseract(file, onProgress) {
 // ---------------------------------------------------------------------------
 //  Entry point: prova prima ML Kit nativo, poi ripiega su Tesseract
 // ---------------------------------------------------------------------------
+function pluginNames() {
+  try { return Object.keys((cap() && cap().Plugins) || {}).join(", ") || "(nessuno)"; }
+  catch { return "(n/d)"; }
+}
+
 export async function readReceipt(file, _opts, onProgress) {
+  const diag = { native: isNative(), plugins: pluginNames(), steps: [] };
+
   // 1) OCR nativo on-device (ML Kit) se disponibile -> più preciso, offline
   if (isNative()) {
     try {
-      const text = await nativeRecognize(file, onProgress);
+      const text = await nativeRecognize(file, onProgress, diag);
       if (text) return parseReceipt(text);
-      console.warn("Nessun plugin OCR nativo trovato: uso Tesseract.");
     } catch (e) {
-      console.warn("OCR nativo fallito, ripiego su Tesseract:", e && e.message);
+      diag.steps.push("ML Kit errore: " + (e && e.message));
     }
+  } else {
+    diag.steps.push("ambiente non nativo (browser)");
   }
-  // 2) ripiego: Tesseract.js (browser o APK senza plugin)
-  return ocrTesseract(file, onProgress);
+
+  // 2) ripiego: Tesseract.js (con timeout, così non resta appeso)
+  try {
+    return await withTimeout(ocrTesseract(file, onProgress), 25000, "Tesseract");
+  } catch (e) {
+    diag.steps.push("Tesseract errore: " + (e && e.message));
+    const err = new Error("OCR non riuscito");
+    err.diag = diag;
+    throw err;
+  }
 }
