@@ -12,6 +12,7 @@
     "apk": "node scripts/build-apk.mjs"
   },
   "dependencies": {
+    "@capacitor-community/image-to-text": "^6.0.0",
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2",
     "tesseract.js": "^5.1.1",

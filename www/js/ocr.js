@@ -80,21 +80,30 @@ function extractText(res) {
 // Questo adapter è difensivo: se l'API differisse, basta aggiungere una voce qui.
 async function nativeRecognize(file, onProgress) {
   const c = cap();
-  if (!c || !c.Plugins) return null;
-  const P = c.Plugins;
+  if (!c) return null;
+  // Ottiene il proxy del plugin per nome dal bridge Capacitor.
+  // registerPlugin() funziona anche senza bundler (app a moduli "nudi").
+  const getPlugin = (name) => {
+    try {
+      if (typeof c.registerPlugin === "function") return c.registerPlugin(name);
+      if (c.Plugins) return c.Plugins[name];
+    } catch (_) {}
+    return undefined;
+  };
   if (onProgress) onProgress(0.4);
   const base64 = await fileToBase64(file);
 
   const candidates = [
-    { name: "TextRecognition", call: (p) => p.detectText({ base64Image: base64 }) },
-    { name: "Ocr", call: (p) => (p.recognize ? p.recognize({ base64 }) : p.detectText({ base64 })) },
-    { name: "ImageToText", call: (p) => p.detectText({ base64 }) },
-    { name: "CapacitorImageToText", call: (p) => p.detectText({ base64 }) },
+    // @capacitor-community/image-to-text  (nome bridge: "CapacitorOcr")
+    { name: "CapacitorOcr", call: (p) => p.detectText({ base64, orientation: "UP" }) },
+    // ripieghi per altri plugin OCR diffusi
+    { name: "Ocr", call: (p) => (p.detectText ? p.detectText({ base64, orientation: "UP" }) : p.recognize({ base64 })) },
+    { name: "TextRecognition", call: (p) => (p.detectText ? p.detectText({ base64Image: base64 }) : p.processImage({ base64 })) },
     { name: "MlkitTextRecognition", call: (p) => p.processImage({ base64 }) },
   ];
 
   for (const cand of candidates) {
-    const plugin = P[cand.name];
+    const plugin = getPlugin(cand.name);
     if (!plugin) continue;
     try {
       const res = await cand.call(plugin);
@@ -104,7 +113,7 @@ async function nativeRecognize(file, onProgress) {
         return text;
       }
     } catch (e) {
-      console.warn("Plugin OCR", cand.name, "errore:", e && e.message);
+      console.warn("Plugin OCR", cand.name, "non utilizzabile:", e && e.message);
     }
   }
   return null;

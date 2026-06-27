@@ -10,7 +10,15 @@
       "PowerShell(\"deleted\")",
       "Bash(git init *)",
       "Bash(git config *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git commit -q -m 'Aggiunge guida build cloud *)",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 4321 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($c\\) { \"In ascolto su 4321 \\(LocalAddress: $\\($c.LocalAddress\\)\\)\" } else { \"Porta 4321 NON in ascolto\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://192.168.1.200:4321/index.html\" -UseBasicParsing -TimeoutSec 5; \"HTTP $\\($r.StatusCode\\) - raggiungibile via IPv4 \\($\\($r.RawContentLength\\) byte\\)\" } catch { \"NON raggiungibile via IPv4: $\\($_.Exception.Message\\)\" })",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:unpkg.com)",
+      "Bash(git commit -q -m 'Aggiunge OCR ML Kit \\(CapacitorOcr\\) con fallback Tesseract *)"
     ]
   }
 }
