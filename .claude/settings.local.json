@@ -18,7 +18,13 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:unpkg.com)",
-      "Bash(git commit -q -m 'Aggiunge OCR ML Kit \\(CapacitorOcr\\) con fallback Tesseract *)"
+      "Bash(git commit -q -m 'Aggiunge OCR ML Kit \\(CapacitorOcr\\) con fallback Tesseract *)",
+      "Bash(git ls-tree *)",
+      "Bash(sort -k4 -n -r)",
+      "Bash(git rm *)",
+      "Bash(git commit -q -m 'Esclude gli APK scaricati dal repo *)",
+      "Bash(ls -1 *.apk *.zip)",
+      "Bash(git commit -q -m 'OCR: ridimensiona immagine + timeout per evitare blocco a 40% *)"
     ]
   }
 }

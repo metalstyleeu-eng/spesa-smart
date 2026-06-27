@@ -50,6 +50,29 @@ function fileToBase64(file) {
   });
 }
 
+// Ridimensiona la foto e restituisce un JPEG in base64 (senza prefisso data:).
+// Fondamentale: passare l'immagine a piena risoluzione al plugin nativo via base64
+// può bloccare il bridge. Ridimensionando, la lettura è veloce e affidabile.
+async function imageToResizedBase64(file, maxW = 1600, quality = 0.8) {
+  const img = await fileToImage(file);
+  const scale = Math.min(1, maxW / img.width);
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  cv.getContext("2d").drawImage(img, 0, 0, w, h);
+  return cv.toDataURL("image/jpeg", quality).split(",")[1];
+}
+
+// Promessa con timeout: se non si risolve entro ms, viene rifiutata
+// (così un plugin nativo bloccato fa scattare il ripiego su Tesseract).
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error((label || "OCR") + " timeout " + ms + "ms")), ms)),
+  ]);
+}
+
 // ---------------------------------------------------------------------------
 //  Motore 1: ML Kit nativo (on-device) tramite il bridge Capacitor
 // ---------------------------------------------------------------------------
@@ -90,8 +113,10 @@ async function nativeRecognize(file, onProgress) {
     } catch (_) {}
     return undefined;
   };
-  if (onProgress) onProgress(0.4);
-  const base64 = await fileToBase64(file);
+  if (onProgress) onProgress(0.3);
+  // immagine ridimensionata (non a piena risoluzione) per non bloccare il bridge
+  const base64 = await imageToResizedBase64(file);
+  if (onProgress) onProgress(0.5);
 
   const candidates = [
     // @capacitor-community/image-to-text  (nome bridge: "CapacitorOcr")
@@ -106,7 +131,8 @@ async function nativeRecognize(file, onProgress) {
     const plugin = getPlugin(cand.name);
     if (!plugin) continue;
     try {
-      const res = await cand.call(plugin);
+      // timeout: se il plugin nativo si blocca, si passa al prossimo / a Tesseract
+      const res = await withTimeout(cand.call(plugin), 15000, cand.name);
       const text = extractText(res);
       if (text && text.trim().length > 2) {
         if (onProgress) onProgress(1);
