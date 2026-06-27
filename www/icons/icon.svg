@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0f766e"/>
+  <g transform="translate(140 96)">
+    <path d="M16 8 h200 a8 8 0 0 1 8 8 v320 l-28 -20 -28 20 -28 -20 -28 20 -28 -20 -28 20 -28 -20 -28 20 V16 a8 8 0 0 1 8 -8 z"
+          fill="#ffffff"/>
+    <g stroke="#0f766e" stroke-width="14" stroke-linecap="round">
+      <line x1="44" y1="70" x2="196" y2="70"/>
+      <line x1="44" y1="120" x2="196" y2="120"/>
+      <line x1="44" y1="170" x2="150" y2="170"/>
+      <line x1="44" y1="220" x2="196" y2="220"/>
+    </g>
+  </g>
+  <circle cx="372" cy="372" r="78" fill="#f59e0b"/>
+  <text x="372" y="408" font-family="system-ui,sans-serif" font-size="96" font-weight="800" fill="#fff" text-anchor="middle">€</text>
+</svg>

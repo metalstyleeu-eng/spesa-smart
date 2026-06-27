@@ -1,0 +1,9 @@
+# dipendenze e build
+node_modules/
+android/
+www/vendor/
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log

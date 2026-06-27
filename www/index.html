@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Scontrini – Spesa Smart</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar__title">
+      <span class="logo">🧾</span>
+      <span>Spesa Smart</span>
+    </div>
+    <span class="chip" title="I dati sono salvati solo su questo telefono">📱 Sul telefono</span>
+  </header>
+
+  <!-- ============ PROMEMORIA BACKUP ============ -->
+  <div id="backupBanner" class="banner hidden">
+    <span id="backupBannerText"></span>
+    <span class="banner__actions">
+      <button id="bannerExport" class="btn-tiny">Esporta ora</button>
+      <button id="bannerLater" class="icon-btn" title="Più tardi">✕</button>
+    </span>
+  </div>
+
+  <main id="main">
+    <!-- ============ HOME / LISTA ============ -->
+    <section id="view-home" class="view active">
+      <div class="summary-cards" id="summaryCards"></div>
+
+      <h2>I tuoi scontrini</h2>
+      <div class="filters">
+        <select id="filterType" class="select-sm" aria-label="Filtra per tipo">
+          <option value="">Tutti i tipi</option>
+        </select>
+        <select id="filterStore" class="select-sm" aria-label="Filtra per negozio">
+          <option value="">Tutti i negozi</option>
+        </select>
+      </div>
+
+      <ul id="receiptList" class="receipt-list"></ul>
+      <p id="emptyState" class="empty hidden">
+        Nessuno scontrino ancora.<br />Tocca <b>＋</b> per fotografarne uno.
+      </p>
+    </section>
+
+    <!-- ============ ANALISI / CONFRONTO ============ -->
+    <section id="view-analytics" class="view">
+      <h2>Analisi prezzi</h2>
+      <div class="card">
+        <label for="productSearch">Cerca un prodotto per vederne l'andamento</label>
+        <input id="productSearch" type="search" placeholder="es. latte, pasta, pane…" autocomplete="off" />
+        <ul id="productSuggestions" class="suggestions"></ul>
+      </div>
+      <div id="priceHistory"></div>
+
+      <h3>Spesa per categoria</h3>
+      <div id="typeCompare" class="card"></div>
+
+      <h3>Confronto negozi</h3>
+      <div id="storeCompare" class="card"></div>
+
+      <h3>Variazioni di prezzo recenti</h3>
+      <div id="priceAlerts"></div>
+    </section>
+
+    <!-- ============ IMPOSTAZIONI ============ -->
+    <section id="view-settings" class="view">
+      <h2>Impostazioni</h2>
+
+      <div class="card">
+        <h3>📱 Dati sul telefono</h3>
+        <p class="muted">
+          Tutti i tuoi scontrini sono salvati <b>solo su questo dispositivo</b>, senza account
+          né internet. <b>Attenzione:</b> se disinstalli l'app o perdi il telefono i dati vanno persi.
+        </p>
+        <button id="btnExport" class="btn">📤 Esporta / trasferisci dati</button>
+        <button id="btnImport" class="btn btn-ghost">📥 Importa dati</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+
+        <label for="backupReminder" style="margin-top:16px">⏰ Promemoria backup</label>
+        <select id="backupReminder">
+          <option value="never">Mai</option>
+          <option value="weekly">Ogni settimana</option>
+          <option value="monthly" selected>Ogni mese</option>
+        </select>
+        <p class="muted" id="lastBackupInfo" style="margin-top:6px"></p>
+      </div>
+
+      <div class="card">
+        <h3>🏷️ Categorie negozi</h3>
+        <p class="muted">Oltre a quelle predefinite, puoi aggiungere categorie tue (es. Erboristeria, Cartoleria, Enoteca…).</p>
+        <div id="customCatList" class="cat-list"></div>
+        <div class="cat-add">
+          <input id="newCatEmoji" type="text" maxlength="2" placeholder="🏪" aria-label="Emoji" />
+          <input id="newCatLabel" type="text" placeholder="Nome categoria" aria-label="Nome categoria" />
+          <button id="btnAddCat" class="btn-tiny">＋</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📷 Lettura scontrini</h3>
+        <p class="muted">
+          La lettura del testo avviene <b>sul dispositivo</b>, in automatico e senza internet:
+          niente da configurare. Nessuna foto e nessun dato lasciano il telefono.
+        </p>
+      </div>
+
+      <p class="muted center">v1.0 · app offline · dati solo sul telefono</p>
+    </section>
+  </main>
+
+  <!-- ============ FAB SCANSIONE ============ -->
+  <button id="fabScan" class="fab" aria-label="Scansiona scontrino">＋</button>
+  <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden />
+
+  <!-- ============ BARRA NAVIGAZIONE ============ -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="home">🏠<span>Scontrini</span></button>
+    <button class="tab" data-view="analytics">📊<span>Analisi</span></button>
+    <button class="tab" data-view="settings">⚙️<span>Impostazioni</span></button>
+  </nav>
+
+  <!-- ============ MODALE REVISIONE SCONTRINO ============ -->
+  <div id="reviewModal" class="modal hidden">
+    <div class="modal__sheet">
+      <div class="modal__head">
+        <h3>Controlla i dati</h3>
+        <button id="closeReview" class="icon-btn">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="field-row">
+          <label>Negozio</label>
+          <input id="rStore" type="text" list="storeList" placeholder="es. Esselunga, Panetteria Rossi…" />
+          <datalist id="storeList"></datalist>
+        </div>
+        <div class="field-2col">
+          <div class="field-row">
+            <label>Tipo</label>
+            <select id="rType"></select>
+          </div>
+          <div class="field-row">
+            <label>Data</label>
+            <input id="rDate" type="date" />
+          </div>
+        </div>
+
+        <div class="row-between">
+          <label>Prodotti</label>
+          <button id="addItem" class="btn-tiny">＋ riga</button>
+        </div>
+        <div id="itemsEditor" class="items-editor"></div>
+
+        <div class="field-row total-row">
+          <label>Totale (€)</label>
+          <input id="rTotal" type="text" inputmode="decimal" />
+        </div>
+        <p class="muted" id="sumHint"></p>
+      </div>
+      <div class="modal__foot">
+        <button id="saveReceipt" class="btn">Salva scontrino</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE DETTAGLIO ============ -->
+  <div id="detailModal" class="modal hidden">
+    <div class="modal__sheet">
+      <div class="modal__head">
+        <h3 id="dTitle">Scontrino</h3>
+        <button id="closeDetail" class="icon-btn">✕</button>
+      </div>
+      <div class="modal__body" id="detailBody"></div>
+      <div class="modal__foot">
+        <button id="editReceipt" class="btn btn-ghost">Modifica</button>
+        <button id="deleteReceipt" class="btn btn-danger">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE ESPORTA / TRASFERISCI ============ -->
+  <div id="exportModal" class="modal hidden">
+    <div class="modal__sheet">
+      <div class="modal__head">
+        <h3>📤 Trasferisci su un altro telefono</h3>
+        <button id="closeExport" class="icon-btn">✕</button>
+      </div>
+      <div class="modal__body">
+        <p class="muted" id="exportInfo"></p>
+        <p class="muted">
+          <b>Come trasferire:</b> usa <b>Condividi</b> o <b>Copia</b> per mandare questo
+          testo all'altro telefono (WhatsApp, email, Drive…). Lì apri l'app →
+          Impostazioni → <b>Importa dati</b> e incolla il testo. Oppure <b>Scarica file</b>.
+        </p>
+        <textarea id="exportText" readonly rows="8" class="code-area"></textarea>
+        <div class="btn-grid">
+          <button id="btnCopy" class="btn">📋 Copia</button>
+          <button id="btnShare" class="btn btn-ghost">🔗 Condividi</button>
+          <button id="btnDownload" class="btn btn-ghost">💾 Scarica file</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE IMPORTA ============ -->
+  <div id="importModal" class="modal hidden">
+    <div class="modal__sheet">
+      <div class="modal__head">
+        <h3>📥 Importa dati</h3>
+        <button id="closeImport" class="icon-btn">✕</button>
+      </div>
+      <div class="modal__body">
+        <p class="muted">Incolla qui il testo esportato dall'altro telefono, oppure scegli un file di backup.</p>
+        <textarea id="importText" rows="7" class="code-area" placeholder='Incolla qui il testo (inizia con { "exportedAt": ... )'></textarea>
+        <button id="btnPickFile" class="btn btn-ghost">📂 Scegli file di backup…</button>
+
+        <div class="field-row" style="margin-top:14px">
+          <label>Modalità</label>
+          <label class="radio-row"><input type="radio" name="impMode" value="replace" checked /> Sostituisci tutti i dati (telefono nuovo)</label>
+          <label class="radio-row"><input type="radio" name="impMode" value="merge" /> Aggiungi a quelli esistenti (salta i doppioni)</label>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button id="btnDoImport" class="btn">Importa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OVERLAY DI ELABORAZIONE ============ -->
+  <div id="loader" class="loader hidden">
+    <div class="loader__box">
+      <div class="spinner"></div>
+      <p id="loaderText">Lettura scontrino…</p>
+      <div class="progress"><div id="progressBar"></div></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Tesseract.js (OCR sul dispositivo).
+       Prima si prova la copia LOCALE in vendor/ (offline, dentro l'app, creata
+       da "npm run setup"); se manca si scarica dalla CDN (serve internet la
+       prima volta). window.OCR_BASE dice a ocr.js dove sono i file. -->
+  <script>window.OCR_BASE = "vendor/";</script>
+  <script
+    src="vendor/tesseract.min.js"
+    onerror="window.OCR_BASE=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';document.head.appendChild(s);"></script>
+  <!-- App (ES modules) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

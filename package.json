@@ -1,0 +1,23 @@
+{
+  "name": "spesa-smart-scontrini",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App scontrini 100% offline: i dati restano solo sul telefono. Impacchettata in APK con Capacitor.",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/fetch-ocr-assets.mjs",
+    "add:android": "cap add android",
+    "sync": "cap sync android",
+    "open:android": "cap open android",
+    "apk": "node scripts/build-apk.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "tesseract.js": "^5.1.1",
+    "tesseract.js-core": "^5.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

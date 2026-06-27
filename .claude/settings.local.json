@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell(\\(Get-Command node -ErrorAction SilentlyContinue\\).Source; node --version 2>$null)",
+      "PowerShell(foreach \\($c in 'python','py','python3','npx'\\) { $s=\\(Get-Command $c -ErrorAction SilentlyContinue\\).Source; if\\($s\\){\"$c -> $s\"} else {\"$c -> NO\"} })",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell($sdk=\"$env:LOCALAPPDATA\\\\Android\\\\Sdk\"; Get-ChildItem $sdk -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders; \"---build-tools---\"; Get-ChildItem \"$sdk\\\\build-tools\" -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders; \"---platforms---\"; Get-ChildItem \"$sdk\\\\platforms\" -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders)",
+      "PowerShell($root=\"C:\\\\Users\\\\Diego Marchesini\\\\Desktop\\\\app scontrini\"; $www=\"$root\\\\www\"; New-Item -ItemType Directory -Force -Path $www | Out-Null; foreach\\($i in 'index.html','sw.js','manifest.webmanifest','css','js','icons'\\){ if\\(Test-Path \"$root\\\\$i\"\\){ Move-Item -Path \"$root\\\\$i\" -Destination \"$www\\\\$i\" -Force } }; \"moved\"; Get-ChildItem $www | Select-Object Name | Format-Table -HideTableHeaders)",
+      "PowerShell(\"deleted\")",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}
