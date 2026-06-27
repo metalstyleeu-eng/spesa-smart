@@ -329,10 +329,11 @@ async function handleScan(file) {
   if (!file) return;
   showLoader("Lettura scontrino…");
   try {
-    const parsed = await readReceipt(file, {}, (p) => {
-      $("#progressBar").style.width = Math.round(p * 100) + "%";
-      $("#loaderText").textContent = p < 1 ? "Lettura scontrino… " + Math.round(p * 100) + "%" : "Analisi…";
-    });
+    const parsed = await readReceipt(
+      file,
+      { onStatus: (s) => { $("#loaderText").textContent = s; } },
+      (p) => { $("#progressBar").style.width = Math.round(p * 100) + "%"; }
+    );
     hideLoader();
     draft = { ...parsed };
     openReview(draft);

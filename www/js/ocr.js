@@ -181,13 +181,15 @@ function pluginNames() {
   catch { return "(n/d)"; }
 }
 
-export async function readReceipt(file, _opts, onProgress) {
+export async function readReceipt(file, opts, onProgress) {
+  const onStatus = (opts && opts.onStatus) || function () {};
   const diag = { native: isNative(), plugins: pluginNames(), steps: [] };
 
   // 1) OCR nativo on-device (ML Kit) se disponibile -> più preciso, offline
   if (isNative()) {
+    onStatus("Lettura con ML Kit…");
     try {
-      const text = await nativeRecognize(file, onProgress, diag);
+      const text = await withTimeout(nativeRecognize(file, onProgress, diag), 9000, "ML Kit");
       if (text) return parseReceipt(text);
     } catch (e) {
       diag.steps.push("ML Kit errore: " + (e && e.message));
@@ -197,8 +199,9 @@ export async function readReceipt(file, _opts, onProgress) {
   }
 
   // 2) ripiego: Tesseract.js (con timeout, così non resta appeso)
+  onStatus("Lettura con Tesseract…");
   try {
-    return await withTimeout(ocrTesseract(file, onProgress), 25000, "Tesseract");
+    return await withTimeout(ocrTesseract(file, onProgress), 12000, "Tesseract");
   } catch (e) {
     diag.steps.push("Tesseract errore: " + (e && e.message));
     const err = new Error("OCR non riuscito");

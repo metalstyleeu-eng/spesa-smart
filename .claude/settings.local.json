@@ -25,7 +25,8 @@
       "Bash(git commit -q -m 'Esclude gli APK scaricati dal repo *)",
       "Bash(ls -1 *.apk *.zip)",
       "Bash(git commit -q -m 'OCR: ridimensiona immagine + timeout per evitare blocco a 40% *)",
-      "Bash(git commit -q -m 'OCR: diagnostica visibile + nessun blocco \\(inserimento manuale di ripiego\\) *)"
+      "Bash(git commit -q -m 'OCR: diagnostica visibile + nessun blocco \\(inserimento manuale di ripiego\\) *)",
+      "Bash(git commit -q -m 'OCR: mostra motore in uso + timeout brevi + etichetta versione v1.1 *)"
     ]
   }
 }
