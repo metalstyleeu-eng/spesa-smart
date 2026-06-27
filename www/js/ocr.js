@@ -50,10 +50,10 @@ function fileToBase64(file) {
   });
 }
 
-// Ridimensiona la foto e restituisce un JPEG in base64 (senza prefisso data:).
-// Fondamentale: passare l'immagine a piena risoluzione al plugin nativo via base64
-// può bloccare il bridge. Ridimensionando, la lettura è veloce e affidabile.
-async function imageToResizedBase64(file, maxW = 1600, quality = 0.8) {
+// Ridimensiona la foto e restituisce un data URL JPEG ("data:image/jpeg;base64,...").
+// Fondamentale: passare l'immagine a piena risoluzione al plugin nativo può
+// bloccare il bridge. Ridimensionando, la lettura è veloce e affidabile.
+async function imageToResizedDataURL(file, maxW = 1600, quality = 0.8) {
   const img = await fileToImage(file);
   const scale = Math.min(1, maxW / img.width);
   const w = Math.round(img.width * scale);
@@ -61,7 +61,7 @@ async function imageToResizedBase64(file, maxW = 1600, quality = 0.8) {
   const cv = document.createElement("canvas");
   cv.width = w; cv.height = h;
   cv.getContext("2d").drawImage(img, 0, 0, w, h);
-  return cv.toDataURL("image/jpeg", quality).split(",")[1];
+  return cv.toDataURL("image/jpeg", quality);
 }
 
 // Promessa con timeout: se non si risolve entro ms, viene rifiutata
@@ -88,8 +88,9 @@ export function isNative() {
 function extractText(res) {
   if (!res) return "";
   if (typeof res === "string") return res;
-  if (typeof res.text === "string") return res.text;
+  if (typeof res.text === "string" && res.text.trim()) return res.text;
   if (typeof res.value === "string") return res.value;
+  if (Array.isArray(res.results)) return res.results.map((r) => r.text || "").join("\n");        // @jcesarmobile/capacitor-ocr
   if (Array.isArray(res.textDetections)) return res.textDetections.map((d) => d.text || "").join("\n");
   if (Array.isArray(res.blocks)) return res.blocks.map((b) => b.text || "").join("\n");
   if (Array.isArray(res.lines)) return res.lines.map((l) => l.text || l).join("\n");
@@ -114,17 +115,18 @@ async function nativeRecognize(file, onProgress, diag) {
     return undefined;
   };
   if (onProgress) onProgress(0.3);
-  // immagine ridimensionata (non a piena risoluzione) per non bloccare il bridge
-  const base64 = await imageToResizedBase64(file);
+  // immagine ridimensionata (non a piena risoluzione) per non bloccare il bridge.
+  // dataUrl = "data:image/jpeg;base64,...."  ;  base64 = solo la parte codificata.
+  const dataUrl = await imageToResizedDataURL(file);
+  const base64 = dataUrl.split(",")[1];
   if (onProgress) onProgress(0.5);
 
   const candidates = [
-    // @capacitor-community/image-to-text  (nome bridge: "CapacitorOcr")
-    { name: "CapacitorOcr", call: (p) => p.detectText({ base64, orientation: "UP" }) },
-    // ripieghi per altri plugin OCR diffusi
-    { name: "Ocr", call: (p) => (p.detectText ? p.detectText({ base64, orientation: "UP" }) : p.recognize({ base64 })) },
+    // @jcesarmobile/capacitor-ocr  (bridge "Ocr", ML Kit incluso/offline)
+    { name: "Ocr", call: (p) => p.process({ image: dataUrl }) },
+    // ripieghi per altri plugin OCR (Capacitor 8)
+    { name: "CapacitorPluginMlKitTextRecognition", call: (p) => p.detectText({ base64Image: base64, rotation: 0 }) },
     { name: "TextRecognition", call: (p) => (p.detectText ? p.detectText({ base64Image: base64 }) : p.processImage({ base64 })) },
-    { name: "MlkitTextRecognition", call: (p) => p.processImage({ base64 }) },
   ];
 
   for (const cand of candidates) {

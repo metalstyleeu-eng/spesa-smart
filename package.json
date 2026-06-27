@@ -12,13 +12,13 @@
     "apk": "node scripts/build-apk.mjs"
   },
   "dependencies": {
-    "@capacitor-community/image-to-text": "^6.0.0",
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@jcesarmobile/capacitor-ocr": "^0.3.0",
     "tesseract.js": "^5.1.1",
     "tesseract.js-core": "^5.1.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/cli": "^8.0.0"
   }
 }
