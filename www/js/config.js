@@ -6,11 +6,11 @@
 
 // Incolla qui l'indirizzo del tuo Worker, es:
 //   "https://spesa-ocr.tuonome.workers.dev"
-export const CLOUD_OCR_URL = "";
+export const CLOUD_OCR_URL = "https://spesa-ocr.metalstyle-eu.workers.dev";
 
 // Opzionale ma consigliato: stringa segreta uguale a APP_TOKEN del server.
 // Serve a evitare che altri usino il tuo server (e la tua quota Gemini).
-export const CLOUD_OCR_KEY = "";
+export const CLOUD_OCR_KEY = "spesa-2026-xy9k";
 
 export function cloudConfigured() {
   return typeof CLOUD_OCR_URL === "string" && /^https:\/\/\S+/.test(CLOUD_OCR_URL);
