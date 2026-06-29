@@ -1,13 +1,15 @@
 // ============================================================================
-//  OCR  –  due motori, scelti automaticamente (nessuna configurazione utente):
-//   1. ML Kit (nativo, on-device) — usato dentro l'APK Android. Gratis, offline,
-//      molto più preciso di Tesseract, nessuna chiave. Riconosciuto via il bridge
-//      Capacitor (window.Capacitor.Plugins).
-//   2. Tesseract.js — ripiego per il browser/PWA (dove ML Kit non esiste).
-//  In entrambi i casi l'elaborazione resta sul dispositivo: nessun dato esce.
+//  OCR  –  tre motori, scelti automaticamente (nessuna configurazione utente):
+//   1. AI cloud (Gemini via mini-server) — qualità massima, anche scontrini
+//      difficili/a colonne. Usato se configurato (config.js) e c'è internet.
+//   2. ML Kit (nativo, on-device) — ripiego offline dentro l'APK.
+//   3. Tesseract.js — ripiego per il browser/PWA.
+//  I dati restano sul telefono; con l'AI cloud la foto viene inviata SOLO per
+//  la lettura (non conservata, non venduta).
 // ============================================================================
 
-import { parseReceipt } from "./parser.js";
+import { parseReceipt, CATEGORIES } from "./parser.js";
+import { CLOUD_OCR_URL, CLOUD_OCR_KEY, cloudConfigured } from "./config.js";
 
 // --- Ridimensiona/migliora l'immagine prima dell'OCR (più veloce e preciso) ---
 async function prepImage(file, maxW = 1600) {
@@ -77,7 +79,48 @@ function withTimeout(promise, ms, label) {
 }
 
 // ---------------------------------------------------------------------------
-//  Motore 1: ML Kit nativo (on-device) tramite il bridge Capacitor
+//  Motore 1: AI cloud (Gemini via mini-server)  → restituisce già strutturato
+// ---------------------------------------------------------------------------
+async function cloudRecognize(file, onProgress) {
+  const dataUrl = await imageToResizedDataURL(file, 2000, 0.85);
+  const base64 = dataUrl.split(",")[1];
+  if (onProgress) onProgress(0.4);
+
+  const headers = { "Content-Type": "application/json" };
+  if (CLOUD_OCR_KEY) headers["x-app-key"] = CLOUD_OCR_KEY;
+
+  const resp = await fetch(CLOUD_OCR_URL, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ image: base64 }),
+  });
+  if (onProgress) onProgress(0.85);
+  if (!resp.ok) throw new Error("server " + resp.status);
+
+  const data = await resp.json();
+  if (data && data.error) throw new Error(data.error);
+
+  const allowed = new Set(CATEGORIES.map((c) => c.label));
+  const items = Array.isArray(data.items)
+    ? data.items
+        .map((it) => ({ name: String(it.name || "").trim(), qty: +it.qty || 1, price: +it.price || 0 }))
+        .filter((it) => it.name || it.price)
+    : [];
+  if (onProgress) onProgress(1);
+  return {
+    store: String(data.store || "").trim(),
+    type: allowed.has(data.type) ? data.type : "Altro",
+    date: /^\d{4}-\d{2}-\d{2}$/.test(data.date) ? data.date : new Date().toISOString().slice(0, 10),
+    items,
+    total: +data.total || 0,
+    raw: "(AI cloud)\n" + items.map((it) => `${it.name}  ${fmtNum(it.price)}`).join("\n"),
+  };
+}
+
+function fmtNum(n) { return (Number(n) || 0).toFixed(2); }
+
+// ---------------------------------------------------------------------------
+//  Motore 2: ML Kit nativo (on-device) tramite il bridge Capacitor
 // ---------------------------------------------------------------------------
 function cap() {
   return typeof window !== "undefined" ? window.Capacitor : undefined;
@@ -186,11 +229,27 @@ function pluginNames() {
   catch { return "(n/d)"; }
 }
 
+function isOnline() {
+  return typeof navigator === "undefined" || navigator.onLine !== false;
+}
+
 export async function readReceipt(file, opts, onProgress) {
   const onStatus = (opts && opts.onStatus) || function () {};
-  const diag = { native: isNative(), plugins: pluginNames(), steps: [] };
+  const diag = { native: isNative(), cloud: cloudConfigured(), plugins: pluginNames(), steps: [] };
 
-  // 1) OCR nativo on-device (ML Kit) se disponibile -> più preciso, offline
+  // 1) AI cloud (qualità massima) se configurata e c'è connessione
+  if (cloudConfigured() && isOnline()) {
+    onStatus("Lettura AI…");
+    try {
+      const rec = await withTimeout(cloudRecognize(file, onProgress), 30000, "AI cloud");
+      if (rec && (rec.items.length || rec.total)) return rec;
+      diag.steps.push("AI cloud: risposta vuota");
+    } catch (e) {
+      diag.steps.push("AI cloud errore: " + (e && e.message));
+    }
+  }
+
+  // 2) OCR nativo on-device (ML Kit) -> ripiego offline
   if (isNative()) {
     onStatus("Lettura con ML Kit…");
     try {
@@ -203,7 +262,7 @@ export async function readReceipt(file, opts, onProgress) {
     diag.steps.push("ambiente non nativo (browser)");
   }
 
-  // 2) ripiego: Tesseract.js (con timeout, così non resta appeso)
+  // 3) ripiego: Tesseract.js (con timeout, così non resta appeso)
   onStatus("Lettura con Tesseract…");
   try {
     return await withTimeout(ocrTesseract(file, onProgress), 12000, "Tesseract");

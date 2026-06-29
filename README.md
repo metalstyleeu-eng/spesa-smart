@@ -71,14 +71,15 @@ PROMPT.md                documento di progettazione
 
 ## 🎯 Lettura degli scontrini (OCR)
 
-- **Nell'APK**: **Google ML Kit on-device** — preciso, offline, gratis, **senza
-  alcuna configurazione** da parte dell'utente. Nessuna foto/dato lascia il telefono.
-- **Nel browser/PWA**: ripiego su **Tesseract.js** (sempre on-device).
-- Dopo la lettura si apre una schermata di **revisione** per correggere/aggiungere
-  righe prima di salvare (l'OCR non è mai perfetto sugli scontrini termici).
+Tre motori, scelti in automatico (l'utente non configura nulla):
+1. **AI cloud (Gemini)** — qualità massima, anche su scontrini difficili/a colonne.
+   Si attiva pubblicando un mini-server gratuito (vedi [DEPLOY-SERVER.md](DEPLOY-SERVER.md)):
+   la foto viene inviata **solo** per la lettura, **non viene conservata**.
+2. **ML Kit on-device** — ripiego offline nell'APK.
+3. **Tesseract.js** — ripiego nel browser/PWA.
 
-Il plugin ML Kit si installa in fase di build (vedi [BUILD-APK.md](BUILD-APK.md));
-l'app lo rileva automaticamente e altrimenti usa Tesseract.
+Dopo la lettura si apre una schermata di **revisione** per correggere prima di salvare.
+I dati degli scontrini restano sempre **solo sul telefono**.
 
 ---
 

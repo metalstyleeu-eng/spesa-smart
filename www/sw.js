@@ -1,7 +1,7 @@
 // Service worker minimale: cache app-shell per uso offline.
 // IMPORTANTE: incrementa questo numero a ogni modifica dei file (es. -v3)
 // così il service worker scarica la nuova versione invece di servire la cache.
-const CACHE = "spesa-smart-v14";
+const CACHE = "spesa-smart-v15";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const ASSETS = [
   "./js/ocr.js",
   "./js/parser.js",
   "./js/compare.js",
+  "./js/config.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
 ];

@@ -341,7 +341,7 @@ async function handleScan(file) {
     hideLoader();
     // Diagnostica visibile + inserimento manuale (l'app non resta mai bloccata)
     const d = e.diag
-      ? `\n\n— Diagnostica —\nNativo: ${e.diag.native}\nPlugin: ${e.diag.plugins}\n${(e.diag.steps || []).join("\n")}`
+      ? `\n\n— Diagnostica —\nAI cloud: ${e.diag.cloud}\nNativo: ${e.diag.native}\nPlugin: ${e.diag.plugins}\n${(e.diag.steps || []).join("\n")}`
       : "\n" + (e && e.message);
     alert("Lettura automatica non riuscita: inserisci i dati a mano." + d);
     draft = { store: "", type: "Altro", date: new Date().toISOString().slice(0, 10), items: [], total: 0 };
