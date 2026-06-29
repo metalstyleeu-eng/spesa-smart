@@ -9,6 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Secret con la chiave di firma (base64). Se presente -> APK "release" firmato
+      # sempre con la STESSA chiave (gli aggiornamenti si installano sopra il vecchio).
+      # Se assente -> APK debug (come prima). Vedi gen-keystore.yml.
+      KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+      KEYSTORE_PASS: spesasmart
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,13 +50,39 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
+      # --- Caso A: chiave di firma presente -> APK release firmato (stabile) ---
+      - name: Build & sign release APK
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          echo "$KEYSTORE_B64" | base64 -d > release.keystore
+          BT="$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)"
+          "$BT/zipalign" -f 4 app/build/outputs/apk/release/app-release-unsigned.apk app-aligned.apk
+          "$BT/apksigner" sign --ks release.keystore \
+            --ks-pass pass:$KEYSTORE_PASS --key-pass pass:$KEYSTORE_PASS \
+            --out app-release.apk app-aligned.apk
+          rm -f release.keystore
+
+      - name: Upload APK (release firmato)
+        if: env.KEYSTORE_B64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpesaSmart-APK
+          path: android/app-release.apk
+          if-no-files-found: error
+
+      # --- Caso B: nessuna chiave -> APK debug (ripiego) ---
       - name: Build debug APK
+        if: env.KEYSTORE_B64 == ''
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK (debug)
+        if: env.KEYSTORE_B64 == ''
         uses: actions/upload-artifact@v4
         with:
           name: SpesaSmart-APK
