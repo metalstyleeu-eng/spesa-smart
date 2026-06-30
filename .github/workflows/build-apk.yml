@@ -57,7 +57,7 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
-          echo "$KEYSTORE_B64" | base64 -d > release.keystore
+          printf '%s' "$KEYSTORE_B64" | tr -d '[:space:]' | base64 -d > release.keystore
           BT="$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)"
           "$BT/zipalign" -f 4 app/build/outputs/apk/release/app-release-unsigned.apk app-aligned.apk
           "$BT/apksigner" sign --ks release.keystore \
