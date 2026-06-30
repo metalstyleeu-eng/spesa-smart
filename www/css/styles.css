@@ -129,7 +129,10 @@ input:focus, select:focus { outline: 2px solid var(--primary); border-color: tra
 
 /* ---------- Items editor ---------- */
 .items-editor { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 14px; }
-.item-edit { display: grid; grid-template-columns: 1fr 70px 28px; gap: 6px; align-items: center; }
+.items-head { display: grid; grid-template-columns: 1fr 48px 72px 28px; gap: 6px; font-size: 11px; color: var(--muted); margin-bottom: 4px; padding: 0 2px; }
+.items-head span:nth-child(2) { text-align: center; }
+.item-edit { display: grid; grid-template-columns: 1fr 48px 72px 28px; gap: 6px; align-items: center; }
+.item-edit .ie-qty { text-align: center; padding: 9px 4px; }
 .item-edit input { padding: 9px 10px; font-size: 15px; }
 .item-edit .del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; }
 

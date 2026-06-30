@@ -28,10 +28,12 @@ const PROMPT = `Sei un estrattore di dati da scontrini italiani. Guarda l'immagi
 }
 Regole IMPORTANTI:
 - Lo scontrino ha la descrizione a sinistra e il prezzo a destra: abbina ogni prodotto al SUO prezzo sulla stessa riga, anche se sono distanti.
+- QUANTITÀ: una riga del tipo "N x prezzo" (es. "2 x 3,70" oppure "2 X 0,15") indica che il PRODOTTO nella riga SUCCESSIVA è stato acquistato in N unità a quel prezzo unitario. In quel caso imposta qty = N e price = prezzo TOTALE di quella riga prodotto. Esempio: "2 x 3,70" seguito da "STRACCIATELLA COOP ... 7,40" -> {"name":"STRACCIATELLA COOP","qty":2,"price":7.40}. NON creare una riga separata per la riga "N x prezzo".
+- Se NON c'è una riga quantità prima del prodotto, qty = 1.
 - Usa il PUNTO come separatore decimale nei numeri JSON (es. 3.06).
 - Correggi errori ovvi di lettura nei nomi prodotto, ma non inventare prodotti.
 - Includi gli sconti come righe con prezzo negativo se presenti.
-- Ignora righe non-prodotto: IVA, subtotale, resto, contante, pagamento, punti fedeltà, intestazione/partita IVA.
+- Ignora righe non-prodotto: IVA, subtotale, totale, resto, contante, pagamento, punti fedeltà, intestazione/partita IVA.
 - Se un dato non è leggibile, usa "" per le stringhe e 0 per i numeri.
 - Rispondi SOLO con il JSON, senza testo prima o dopo.`;
 

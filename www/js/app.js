@@ -377,8 +377,10 @@ function renderItemsEditor(items) {
 function itemRow(it = { name: "", qty: 1, price: 0 }) {
   const div = document.createElement("div");
   div.className = "item-edit";
+  const qty = it.qty && it.qty > 0 ? it.qty : 1;
   div.innerHTML = `
     <input class="ie-name" type="text" placeholder="Prodotto" value="${esc(it.name)}" />
+    <input class="ie-qty" type="number" min="1" step="1" title="Quantità" value="${qty}" />
     <input class="ie-price" type="text" inputmode="decimal" placeholder="0,00" value="${it.price ? fmtPrice(it.price) : ""}" />
     <button class="del" title="Rimuovi">✕</button>`;
   div.querySelector(".del").onclick = () => { div.remove(); updateSumHint(); };
@@ -389,7 +391,7 @@ function itemRow(it = { name: "", qty: 1, price: 0 }) {
 function collectItems() {
   return $$("#itemsEditor .item-edit").map((row) => ({
     name: row.querySelector(".ie-name").value.trim(),
-    qty: 1,
+    qty: parseInt(row.querySelector(".ie-qty").value, 10) || 1,
     price: parsePrice(row.querySelector(".ie-price").value) || 0,
   })).filter((it) => it.name || it.price);
 }
