@@ -11,3 +11,5 @@ www/vendor/
 .DS_Store
 Thumbs.db
 *.log
+
+signing/

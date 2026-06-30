@@ -50,23 +50,36 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
-      # --- Caso A: chiave di firma presente -> APK release firmato (stabile) ---
+      # Prepara la chiave di firma: prima il file nel repo (signing/keystore.b64),
+      # altrimenti il secret KEYSTORE_B64. signed=true se ne abbiamo una.
+      - name: Prepara chiave di firma
+        id: signing
+        run: |
+          if [ -f signing/keystore.b64 ]; then SRC="$(cat signing/keystore.b64)";
+          elif [ -n "$KEYSTORE_B64" ]; then SRC="$KEYSTORE_B64";
+          else SRC=""; fi
+          if [ -n "$SRC" ]; then
+            printf '%s' "$SRC" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- Caso A: chiave presente -> APK release firmato (firma stabile) ---
       - name: Build & sign release APK
-        if: env.KEYSTORE_B64 != ''
+        if: steps.signing.outputs.signed == 'true'
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
-          printf '%s' "$KEYSTORE_B64" | tr -d '[:space:]' | base64 -d > release.keystore
           BT="$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)"
           "$BT/zipalign" -f 4 app/build/outputs/apk/release/app-release-unsigned.apk app-aligned.apk
-          "$BT/apksigner" sign --ks release.keystore \
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.keystore" \
             --ks-pass pass:$KEYSTORE_PASS --key-pass pass:$KEYSTORE_PASS \
             --out app-release.apk app-aligned.apk
-          rm -f release.keystore
 
       - name: Upload APK (release firmato)
-        if: env.KEYSTORE_B64 != ''
+        if: steps.signing.outputs.signed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: SpesaSmart-APK
@@ -75,14 +88,14 @@ jobs:
 
       # --- Caso B: nessuna chiave -> APK debug (ripiego) ---
       - name: Build debug APK
-        if: env.KEYSTORE_B64 == ''
+        if: steps.signing.outputs.signed != 'true'
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK (debug)
-        if: env.KEYSTORE_B64 == ''
+        if: steps.signing.outputs.signed != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: SpesaSmart-APK
